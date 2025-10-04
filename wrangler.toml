@@ -1,0 +1,13 @@
+# Ini adalah file konfigurasi untuk Cloudflare Wrangler.
+# Ganti 'vless-worker' dengan nama worker yang Anda inginkan.
+name = "vless-worker"
+main = "_worker.js"
+compatibility_date = "2023-10-26"
+
+[vars]
+# Masukkan UUID Anda di sini. Anda dapat menggunakan beberapa UUID dengan memisahkannya menggunakan koma.
+# Contoh: UUID = "uuid1,uuid2,uuid3"
+UUID = "d342d11e-d424-4583-b36e-524ab1f0afa4"
+
+# (Opsional) Tentukan IP atau domain proxy kustom. Jika tidak diisi, akan menggunakan daftar default dari skrip.
+# PROXYIP = "192.168.1.1"
