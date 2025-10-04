@@ -1,110 +1,62 @@
-# VLESS Worker untuk Cloudflare
+# Proksi VLESS Worker yang Aman & Tersembunyi
 
-Skrip ini memungkinkan Anda untuk membuat proksi VLESS berkinerja tinggi menggunakan infrastruktur serverless dari Cloudflare Workers. Ini adalah implementasi populer yang didasarkan pada proyek [EDtunnel](https://github.com/3Kmfi6HP/EDtunnel), yang menawarkan banyak fitur canggih langsung dari kotaknya.
+Ini adalah implementasi Cloudflare Worker untuk VLESS yang dirancang dengan fokus pada keamanan dan agar tidak mudah terdeteksi. Berbeda dengan implementasi lain, skrip ini tidak menyajikan halaman web atau tautan konfigurasi apa pun. Ia bertindak murni sebagai proksi WebSocket, membuatnya terlihat seperti lalu lintas API biasa.
 
-## Fitur Utama
+## Konsep Utama
 
-- **Proksi VLESS**: Meneruskan lalu lintas VLESS melalui jaringan global Cloudflare.
-- **Koneksi WebSocket**: Menggunakan WebSocket untuk menyamarkan lalu lintas agar lebih tahan terhadap sensor.
-- **Halaman Konfigurasi Otomatis**: Secara otomatis menghasilkan halaman web dengan informasi konfigurasi, tautan, dan kode QR untuk kemudahan pengaturan klien.
-- **Tautan Langganan (Subscribe Link)**: Menghasilkan tautan langganan yang kompatibel dengan berbagai aplikasi klien populer seperti Clash, V2RayNG, Sing-box, dan lainnya.
-- **Dukungan Multi-UUID**: Anda dapat menggunakan beberapa UUID dalam satu worker, yang dipisahkan dengan koma.
-- **Domain Terbalik (Fallback)**: Jika ada permintaan yang masuk ke worker tanpa path UUID yang benar, permintaan tersebut akan dialihkan ke situs web yang sah (seperti Wikipedia atau Bing) untuk menyembunyikan keberadaan proksi.
-- **Konfigurasi Mudah**: Pengaturan dapat dilakukan langsung di dalam skrip atau melalui *Environment Variables* di dasbor Cloudflare untuk fleksibilitas maksimum.
+- **Tidak Ada Jejak (No Footprint)**: Mengakses URL worker melalui browser akan langsung dialihkan ke situs lain (`google.com` secara default), sehingga tidak ada tanda-tanda bahwa ini adalah server proksi.
+- **Proksi Dinamis**: Server VLESS tujuan tidak diatur secara kaku di dalam worker. Sebaliknya, Anda menentukannya langsung di **path URL** pada konfigurasi klien VLESS Anda.
+- **Keamanan Melalui Kerahasiaan (Security Through Obscurity)**: Dengan menggunakan path URL khusus, koneksi Anda menyatu dengan lalu lintas web biasa, sehingga lebih sulit bagi penyedia layanan internet untuk mendeteksi dan memblokirnya.
 
-## Metode Deployment
+## Cara Kerja
 
-Anda dapat men-deploy worker ini menggunakan dua metode: melalui dasbor Cloudflare (cara mudah) atau menggunakan Wrangler CLI (untuk pengguna tingkat lanjut).
+Worker ini mendengarkan koneksi WebSocket yang masuk. Ia menggunakan struktur URL tertentu untuk mengetahui ke mana harus meneruskan lalu lintas VLESS Anda.
 
-### Metode 1: Melalui Dasbor Cloudflare (Cara Mudah)
+Struktur URL yang digunakan di klien Anda adalah:
+`wss://<nama-worker-anda>.<subdomain-anda>.workers.dev:443`
 
-Metode ini tidak memerlukan instalasi apa pun di komputer Anda.
+Dan yang terpenting, **Path** diatur ke:
+`/proxy/<server-vless-anda.com>`
 
-**Langkah-langkah Deployment:**
+Worker akan secara otomatis mengekstrak `<server-vless-anda.com>` dari path dan, setelah menerima paket VLESS pertama, akan membuat **koneksi TCP mentah** ke server tersebut pada port yang Anda tentukan di klien.
 
-1.  **Login ke Cloudflare**: Buka dasbor [Cloudflare](https://dash.cloudflare.com/) Anda.
-2.  **Buka Workers**: Di menu sebelah kiri, navigasi ke **Workers & Pages**.
-3.  **Buat Worker**: Klik **Create application**, lalu pilih **Create Worker**.
-4.  **Beri Nama Worker**: Beri nama worker Anda (misalnya, `vless-proxy-viral`), lalu klik **Deploy**.
-5.  **Edit Kode**: Setelah worker dibuat, klik **Edit code**.
-6.  **Salin dan Tempel Kode**: Hapus semua kode yang ada di editor, lalu salin seluruh konten dari file `_worker.js` ini dan tempelkan ke editor.
-7.  **Deploy Perubahan**: Klik **Deploy** untuk menyimpan skrip.
+## Deployment
 
-**Konfigurasi (Variabel Lingkungan):**
+Anda dapat menggunakan metode deployment favorit Anda:
 
-Ini adalah cara yang paling direkomendasikan untuk mengonfigurasi worker Anda.
+### 1. Melalui Dasbor Cloudflare
 
-1.  Di halaman worker Anda, klik tab **Settings** > **Variables**.
-2.  Di bawah **Environment Variables**, klik **Add variable**.
-3.  Tambahkan variabel berikut dan klik **Save and Deploy** setelah selesai:
-    - **`UUID`**: Masukkan UUID Anda. Untuk menggunakan beberapa UUID, pisahkan dengan koma (contoh: `uuid1,uuid2,uuid3`).
-    - **`PROXYIP`**: (Opsional) Masukkan IP atau domain proxy kustom Anda.
-    - **`DNS_RESOLVER_URL`**: (Opsional) Ganti URL DoH jika diperlukan.
+1.  **Buat Worker**: Di dasbor Cloudflare, navigasi ke **Workers & Pages** dan buat worker baru.
+2.  **Salin Kode**: Salin seluruh konten dari `_worker.js` dan tempelkan ke editor kode worker.
+3.  **Atur UUID**: Buka tab **Settings** > **Variables**. Tambahkan Environment Variable baru:
+    -   Nama Variabel: `UUID`
+    -   Nilai Variabel: `d342d11e-d424-4583-b36e-524ab1f0afa4` (atau UUID Anda sendiri)
+4.  **Simpan & Deploy**.
 
-### Metode 2: Menggunakan Wrangler CLI (Cara Lanjutan)
+### 2. Menggunakan Wrangler CLI
 
-Metode ini memungkinkan Anda men-deploy dan mengelola worker langsung dari baris perintah (command line), menggunakan file `wrangler.toml` yang sudah disediakan.
+1.  **Konfigurasi `wrangler.toml`**:
+    -   Pastikan `name` sesuai dengan nama worker yang Anda inginkan.
+    -   Atur `UUID` di bawah `[vars]`.
+2.  **Deploy**: Jalankan `wrangler deploy` dari terminal Anda.
 
-**Prasyarat:**
+## Konfigurasi Klien VLESS (Contoh untuk V2RayN)
 
--   [Node.js](https://nodejs.org/) (versi 16.13.0 atau lebih baru)
--   NPM (biasanya terinstal bersama Node.js)
+Karena worker ini tidak menghasilkan tautan konfigurasi, Anda harus mengaturnya secara manual di klien Anda.
 
-**Langkah-langkah Deployment:**
+1.  Buka klien V2RayN (atau klien lain yang Anda gunakan).
+2.  Tambahkan server baru dengan tipe **VLESS**.
+3.  Isi konfigurasi sebagai berikut:
+    -   **Address (Alamat)**: `nama-worker-anda.subdomain-anda.workers.dev`
+    -   **Port**: `443` (atau port lain yang didukung Cloudflare seperti 8443, 2096, dll.)
+    -   **ID (UUID)**: `d342d11e-d424-4583-b36e-524ab1f0afa4` (atau UUID yang Anda atur di worker)
+    -   **Flow**: (Biarkan kosong atau default)
+    -   **Encryption (Enkripsi)**: `none`
+    -   **Transport (Transportasi)**: `ws` (WebSocket)
+    -   **Host**: Biarkan **kosong**. Worker akan mengabaikannya.
+    -   **Path**: `/proxy/server-vless-anda.com` (Ganti `server-vless-anda.com` dengan alamat server VLESS tujuan Anda).
+    -   **Security (Keamanan)**: `tls`
 
-1.  **Instal Wrangler**: Buka terminal atau command prompt dan jalankan perintah berikut:
-    ```bash
-    npm install -g wrangler
-    ```
+Simpan konfigurasi, dan Anda siap untuk terhubung.
 
-2.  **Login ke Wrangler**: Hubungkan wrangler dengan akun Cloudflare Anda:
-    ```bash
-    wrangler login
-    ```
-
-3.  **Dapatkan Kode Proyek**: Clone repositori ini ke komputer lokal Anda.
-    ```bash
-    # Ganti URL dengan URL repositori ini jika perlu
-    git clone https://github.com/user/repo.git
-    cd repo
-    ```
-
-4.  **Konfigurasi `wrangler.toml`**:
-    -   Buka file `wrangler.toml`.
-    -   Ubah `name` menjadi nama worker yang Anda inginkan.
-    -   Di bawah bagian `[vars]`, atur nilai `UUID` dan `PROXYIP` (jika diperlukan).
-
-5.  **Deploy Worker**: Jalankan perintah berikut untuk men-deploy worker Anda:
-    ```bash
-    wrangler deploy
-    ```
-    Wrangler akan secara otomatis membaca konfigurasi dan variabel dari `wrangler.toml` dan men-deploy worker ke akun Cloudflare Anda.
-
-## Cara Penggunaan
-
-Setelah worker Anda berhasil di-deploy:
-
-1.  Buka URL worker Anda di browser dengan menambahkan path UUID Anda.
-    - Format: `https://<nama-worker>.<subdomain-anda>.workers.dev/<uuid-anda>`
-2.  Halaman web akan muncul, menampilkan:
-    - Tautan konfigurasi VLESS mentah.
-    - Tombol untuk menyalin tautan.
-    - Tautan langganan untuk berbagai klien.
-3.  Salin tautan yang sesuai dan impor ke dalam aplikasi klien VLESS Anda.
-
-Selesai! Anda sekarang memiliki proksi VLESS yang berjalan di Cloudflare.
-
-## Penyelesaian Masalah (Troubleshooting)
-
-### Error 1101: Worker threw exception
-
-Ini adalah kesalahan umum yang biasanya terjadi jika **tanggal kompatibilitas** (compatibility date) worker Anda sudah kedaluwarsa. Skrip ini memerlukan tanggal yang lebih baru untuk mendukung fitur-fitur modern seperti `cloudflare:sockets`.
-
-**Cara Memperbaiki:**
-
-1.  Di dasbor Cloudflare, buka worker Anda.
-2.  Navigasi ke tab **Settings** > **Compatibility**.
-3.  Pastikan `compatibility_date` diatur ke tanggal yang baru (misalnya, `2024-07-25` atau lebih baru).
-4.  Klik **Save and Deploy**.
-
-Jika Anda menggunakan metode deployment Wrangler CLI, Anda dapat mengubahnya langsung di file `wrangler.toml`.
+**Catatan Penting**: Port yang Anda atur di klien (misalnya, `443`) adalah port yang akan digunakan oleh worker untuk terhubung ke `server-vless-anda.com`. Pastikan server VLESS Anda di `server-vless-anda.com` benar-benar berjalan di port tersebut.
