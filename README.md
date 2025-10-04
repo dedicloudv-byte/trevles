@@ -93,3 +93,18 @@ Setelah worker Anda berhasil di-deploy:
 3.  Salin tautan yang sesuai dan impor ke dalam aplikasi klien VLESS Anda.
 
 Selesai! Anda sekarang memiliki proksi VLESS yang berjalan di Cloudflare.
+
+## Penyelesaian Masalah (Troubleshooting)
+
+### Error 1101: Worker threw exception
+
+Ini adalah kesalahan umum yang biasanya terjadi jika **tanggal kompatibilitas** (compatibility date) worker Anda sudah kedaluwarsa. Skrip ini memerlukan tanggal yang lebih baru untuk mendukung fitur-fitur modern seperti `cloudflare:sockets`.
+
+**Cara Memperbaiki:**
+
+1.  Di dasbor Cloudflare, buka worker Anda.
+2.  Navigasi ke tab **Settings** > **Compatibility**.
+3.  Pastikan `compatibility_date` diatur ke tanggal yang baru (misalnya, `2024-07-25` atau lebih baru).
+4.  Klik **Save and Deploy**.
+
+Jika Anda menggunakan metode deployment Wrangler CLI, Anda dapat mengubahnya langsung di file `wrangler.toml`.

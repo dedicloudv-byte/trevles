@@ -77,15 +77,20 @@ export default {
 						return bestSubConfig;
 					};
 					default:
-						// return new Response('Not found', { status: 404 });
-						// For any other path, reverse proxy to 'ramdom website' and return the original response, caching it in the process
+						// Jika daftar domain fallback kosong, kembalikan kesalahan 404 untuk mencegah crash.
+						if (!cn_hostnames || cn_hostnames.length === 0) {
+							return new Response('Not Found', { status: 404 });
+						}
+
+						// Untuk path lain, proksi terbalik ke situs web acak dari daftar.
 						const randomHostname = cn_hostnames[Math.floor(Math.random() * cn_hostnames.length)];
 						const newHeaders = new Headers(request.headers);
 						newHeaders.set('cf-connecting-ip', '1.2.3.4');
 						newHeaders.set('x-forwarded-for', '1.2.3.4');
 						newHeaders.set('x-real-ip', '1.2.3.4');
 						newHeaders.set('referer', 'https://www.google.com/search?q=edtunnel');
-						// Use fetch to proxy the request to 15 different domains
+
+						// Gunakan fetch untuk memproksi permintaan.
 						const proxyUrl = 'https://' + randomHostname + url.pathname + url.search;
 						let modifiedRequest = new Request(proxyUrl, {
 							method: request.method,
@@ -93,15 +98,18 @@ export default {
 							body: request.body,
 							redirect: 'manual',
 						});
+
 						const proxyResponse = await fetch(modifiedRequest, { redirect: 'manual' });
-						// Check for 302 or 301 redirect status and return an error response
+
+						// Mencegah loop pengalihan dan pengalihan yang tidak aman.
 						if ([301, 302].includes(proxyResponse.status)) {
 							return new Response(`Redirects to ${randomHostname} are not allowed.`, {
 								status: 403,
 								statusText: 'Forbidden',
 							});
 						}
-						// Return the response from the proxy server
+
+						// Kembalikan respons dari server proksi.
 						return proxyResponse;
 				}
 			} else {

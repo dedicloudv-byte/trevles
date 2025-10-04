@@ -2,7 +2,7 @@
 # Ganti 'vless-worker' dengan nama worker yang Anda inginkan.
 name = "vless-worker"
 main = "_worker.js"
-compatibility_date = "2023-10-26"
+compatibility_date = "2024-07-25" # Tanggal diperbarui untuk mendukung fitur modern seperti 'cloudflare:sockets'
 
 [vars]
 # Masukkan UUID Anda di sini. Anda dapat menggunakan beberapa UUID dengan memisahkannya menggunakan koma.
