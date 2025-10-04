@@ -1,6 +1,6 @@
 # Ini adalah file konfigurasi untuk Cloudflare Wrangler.
 # Ganti 'vless-worker' dengan nama worker yang Anda inginkan.
-name = "vless-worker"
+name = "weeb"
 main = "_worker.js"
 compatibility_date = "2024-07-25" # Tanggal diperbarui untuk mendukung fitur modern seperti 'cloudflare:sockets'
 
